@@ -361,7 +361,7 @@ static const struct usb_endpoint_descriptor slcan_comm_endp[] = {{
 	.bEndpointAddress = (CDCACM_SLCAN_ENDPOINT + 1) | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 64,
-	.bInterval =  10,
+	.bInterval =  4,
 }};
 
 static const struct usb_endpoint_descriptor slcan_data_endp[] = {{
@@ -370,14 +370,14 @@ static const struct usb_endpoint_descriptor slcan_data_endp[] = {{
 	.bEndpointAddress = CDCACM_SLCAN_ENDPOINT,
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
 	.wMaxPacketSize = CDCACM_PACKET_SIZE,
-	.bInterval = 10,
+	.bInterval = 4,
 }, {
 	.bLength = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bEndpointAddress = CDCACM_SLCAN_ENDPOINT | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
-	.wMaxPacketSize = CDCACM_PACKET_SIZE,
-	.bInterval = 10,
+	.wMaxPacketSize = 512,
+	.bInterval = 4,
 }};
 
 static const struct {
@@ -602,6 +602,7 @@ static enum usbd_request_return_codes  cdcacm_control_request(usbd_device *dev,
 
 int cdcacm_get_config(void)
 {
+	gpio_toggle(GPIOA, GPIO10);
 	return configured;
 }
 
@@ -686,7 +687,7 @@ static void cdcacm_set_config(usbd_device *dev, uint16_t wValue)
 
 /* We need a special large control buffer for this device: */
 #if defined(PLATFORM_HAS_SLCAN)
-uint8_t usbd_control_buffer[512];
+uint8_t usbd_control_buffer[768];
 #else
 uint8_t usbd_control_buffer[256];
 #endif
