@@ -268,10 +268,11 @@ void platform_init(void)
 	 * e.g. by PWM onTIM1_CH3 (PA10)
 	 */
 	gpio_mode_setup(LED_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_PIN);
-	gpio_set_output_options(LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ,
+	gpio_set_output_options(LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ,
 							LED_PIN);
-//	gpio_set(LED_PORT, LED_PIN);
-	gpio_toggle(LED_PORT, LED_PIN);
+	gpio_set(LED_PORT, LED_PIN);
+//	gpio_toggle(GPIOA, GPIO10);
+//	gpio_toggle(GPIOA, GPIO10);
 	/* CAN Pins
 	 * Configure CAN pin: Slow.  OD and  PullUp for now.
 	 *

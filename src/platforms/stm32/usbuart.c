@@ -95,13 +95,13 @@ static void usbuart_set_led_state(uint8_t ledn, bool state)
 	if (state)
 	{
 		led_state |= ledn;
-		gpio_set(LED_PORT_UART, LED_UART);
+		gpio_set(GPIOA, GPIO10);
 	}
 	else
 	{
 		led_state &= ~ledn;
 		if (!led_state)
-			gpio_clear(LED_PORT_UART, LED_UART);
+			gpio_clear(GPIOA, GPIO10);
 	}
 }
 
