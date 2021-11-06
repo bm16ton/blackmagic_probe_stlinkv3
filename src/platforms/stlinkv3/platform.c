@@ -141,6 +141,7 @@ bool platform_srst_get_val()
 
 /* GND_DETECT is pull low with 100R. Probably some task should
  * pull is high, test and than immediate release */
+
 #define GND_DETECT_PORT GPIOG
 #define GND_DETECT_PIN  GPIO5
 void exti9_5_isr(void)
@@ -213,6 +214,7 @@ void platform_init(void)
 	adc_set_sample_time(ADC1, ADC_CHANNEL0, ADC_SMPR_SMP_3CYC);
 	adc_power_on(ADC1);
 
+
 	rcc_periph_clock_enable(RCC_SYSCFG);
 	gpio_mode_setup(GND_DETECT_PORT, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GND_DETECT_PIN);
 	nvic_set_priority(NVIC_EXTI9_5_IRQ, 15);
@@ -220,6 +222,7 @@ void platform_init(void)
 	exti_select_source(EXTI5,  GPIOG);
 	exti_set_trigger(EXTI5, EXTI_TRIGGER_BOTH);
 	exti_enable_request(EXTI5);
+
 
 	/* Configure srst pin. */
 	gpio_set_output_options(SRST_PORT, GPIO_OTYPE_OD, GPIO_OSPEED_2MHZ, SRST_PIN);
@@ -265,9 +268,10 @@ void platform_init(void)
 	 * e.g. by PWM onTIM1_CH3 (PA10)
 	 */
 	gpio_mode_setup(LED_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_PIN);
-	gpio_set_output_options(LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ,
+	gpio_set_output_options(LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ,
 							LED_PIN);
-
+//	gpio_set(LED_PORT, LED_PIN);
+	gpio_toggle(LED_PORT, LED_PIN);
 	/* CAN Pins
 	 * Configure CAN pin: Slow.  OD and  PullUp for now.
 	 *
