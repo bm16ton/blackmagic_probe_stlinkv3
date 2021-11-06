@@ -13,7 +13,7 @@ LDFLAGS_BOOT := $(LDFLAGS) -mfpu=fpv5-sp-d16 -mfloat-abi=hard \
 	-L../libopencm3/lib
 
 ifeq ($(NO_BOOTLOADER), 1)
-APP_START = 0x08000000
+APP_START = 0x08040000
 else
 APP_START = 0x08020000
 endif
