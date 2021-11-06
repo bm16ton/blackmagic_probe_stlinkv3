@@ -106,6 +106,7 @@ ifndef PC_HOSTED
 %.bin:	%.elf
 	@echo "  OBJCOPY $@"
 	$(Q)$(OBJCOPY) -O binary $^ $@
+	cp blackmagic.bin slv3app1.bin
 
 %.hex:	%.elf
 	@echo "  OBJCOPY $@"
@@ -143,6 +144,7 @@ all_platforms:
 	done ;\
 	echo "</ul></body></html>" >> artifacts/index.html ;\
 	cp artifacts/*.bin artifacts/$(shell git describe --always --dirty --tags)
+	cp blackmagic.bin slv3app1.bin
 
 command.c: include/version.h
 
