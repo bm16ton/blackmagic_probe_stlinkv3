@@ -1,4 +1,5 @@
-PROBE_HOST ?= native
+PROBE_HOST ?= stlinkv3
+NO_BOOTLOADER ?= 1
 PLATFORM_DIR = platforms/$(PROBE_HOST)
 VPATH += $(PLATFORM_DIR) target
 ENABLE_DEBUG ?=
