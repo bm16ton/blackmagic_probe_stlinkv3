@@ -602,7 +602,6 @@ static enum usbd_request_return_codes  cdcacm_control_request(usbd_device *dev,
 
 int cdcacm_get_config(void)
 {
-	gpio_toggle(GPIOA, GPIO10);
 	return configured;
 }
 
