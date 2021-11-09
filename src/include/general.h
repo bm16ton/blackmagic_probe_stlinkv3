@@ -37,7 +37,6 @@
 #include <sys/types.h>
 
 #include "platform.h"
-#include "platform_support.h"
 
 extern uint32_t delay_cnt;
 
@@ -157,12 +156,6 @@ static inline void DEBUG_WIRE(const char *format, ...)
 	return;
 }
 #endif
-
-#define ALIGN(x, n) (((x) + (n) - 1) & ~((n) - 1))
-#undef MIN
-#define MIN(x, y)  (((x) < (y)) ? (x) : (y))
-#undef MAX
-#define MAX(x, y)  (((x) > (y)) ? (x) : (y))
 
 #if !defined(SYSTICKHZ)
 # define SYSTICKHZ 100

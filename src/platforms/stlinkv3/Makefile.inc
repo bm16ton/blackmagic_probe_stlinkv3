@@ -12,11 +12,8 @@ LDFLAGS_BOOT := $(LDFLAGS) -mfpu=fpv5-sp-d16 -mfloat-abi=hard \
 	-Wl,-Map=mapfile -mthumb -mcpu=cortex-m7 -Wl,-gc-sections \
 	-L../libopencm3/lib
 
-ifeq ($(NO_BOOTLOADER), 1)
+
 APP_START = 0x08040000
-else
-APP_START = 0x08020000
-endif
 
 LDFLAGS = $(LDFLAGS_BOOT)
 LDFLAGS +=  -Wl,-Ttext=$(APP_START)
@@ -36,19 +33,15 @@ SRC += 	usbuart.c	\
     stm32-slcan.c   \
 	timing.c	\
 	timing_stm32.c	\
-	traceswoasync_f723.c	\
-	traceswodecode.c	\
 
-ifeq ($(NO_BOOTLOADER), 1)
-all:	blackmagic.bin
-else
-all:	blackmagic.bin blackmagic_dfu.bin blackmagic_dfu.hex
 
-blackmagic_dfu.elf: usbdfu.o dfucore.o dfu_f4.o usb_f723.o \
-		usb_dwc_common.o usb_control.o serialno.o
+all:	slv3app1.bin
+
+slv3app1.elf:  usb_f723.o \
+		usb_dwc_common.o usb_control.o
 	@echo "  LD      $@"
 	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
-endif
+
 host_clean:
 	-$(Q)$(RM) *.bin *elf *hex *.o
 

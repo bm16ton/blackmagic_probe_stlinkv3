@@ -1,15 +1,3 @@
-Stlinkv3 port of BMP originally from https://github.com/stoyan-shopov/blackmagic.git  but I couldnt get the bmp to work at all
-and the serial side would die out after 1 charactor. The endpoints and buffers where all outa usb2-hs spec so doing my best
-the uart and can now work well for me but bmp side is screwed. All endpoints have been brought up to 512b from 64 except
-interface 7 which I think i had working well with it as well. It seeems like (probly by mistake?) that PA0 (vcc input)
-has been turned into an output instead of an input, and the firmware wont boot without (target voltage check?) Imnot sure
-what ground detect is supposed to do butits currently playing the role of what I thought was PA0's job? I dunno. But
-Ground detect is attached to ground plane connecting both boards so bringing it high would be the same thing as power fritzing
-your boards. Also the various pins outs for the mini stlinkv3s show pin1 on 14pin connector PB0 as 3.3v but im outputing 5v.
-
-
-
-
 Black Magic Probe
 =================
 
@@ -75,7 +63,7 @@ Transfer rate: 31 KB/sec, 919 bytes/write.
 (gdb) b main
 Breakpoint 1 at 0x80000e8: file /devel/en_apps/gpio/f4_discovery/../gpio.c, line 70.
 (gdb) r
-Starting program: /devel/en_apps/gpio/f4_discovery/gpio.elf
+Starting program: /devel/en_apps/gpio/f4_discovery/gpio.elf 
 Note: automatically using hardware breakpoints for read-only addresses.
 
 Breakpoint 1, main () at /devel/en_apps/gpio/f4_discovery/../gpio.c:70
@@ -107,7 +95,7 @@ Add "-P (position)" to the next invocation to select one.
 For the setup from the sample session above:
 In another terminal:
 ```console
-> blackmagic
+> blackmagic 
 Using 1d50:6018 E2E489E7 Black Sphere Technologies Black Magic Probe (STLINK), (Firmware v1.6.1-477-g70bb131-dirty)
 Remote is Black Magic Probe (STLINK), (Firmware v1.6.1-477-g70bb131-dirty) v1.6.1-477-g70bb131-dirty
 Listening on TCP: 2000

@@ -20,29 +20,37 @@ endif
 SRC =			\
 	main.c		\
 	platform.c	\
+ 	usbuart.c	\
+	cdcacm.c	\
+	serialno.c	\
+        stm32-slcan.c   \
+	timing.c	\
+	timing_stm32.c	\
 
-
-include $(PLATFORM_DIR)/Makefile.inc
+include platforms/stlinkv3/Makefile.inc
 
 OPT_FLAGS ?= -Os
 CFLAGS += $(OPT_FLAGS)
 LDFLAGS += $(OPT_FLAGS)
 
-ifndef TARGET
-ifdef PC_HOSTED
-TARGET = slv3app1
-else
-TARGET = slv3app1.elf
-endif
-endif
-
-
-CFLAGS += -DPC_HOSTED=0
-VPATH += platforms/common
-CFLAGS += -Iplatforms/common
-
+TARGET = blackmagic
 
 OBJ = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(SRC)))
+
+all:	blackmagic.elf
+
+%.bin: %.elf
+       @echo "  OBJCOPY $@"
+       $(Q)$(OBJCOPY) -O binary $^ $@
+
+%.hex: %.elf
+       @echo "  OBJCOPY $@"
+
+blackmagic.elf:  usb_f723.o \
+		usb_dwc_common.o usb_control.o
+	@echo "  LD      $@"
+	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
+
 
 $(TARGET): include/version.h $(OBJ)
 	@echo "  LD      $@"
@@ -55,16 +63,6 @@ $(TARGET): include/version.h $(OBJ)
 %.o:	%.S
 	@echo "  AS      $<"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
-
-ifndef PC_HOSTED
-%.bin:	%.elf
-	@echo "  OBJCOPY $@"
-	$(Q)$(OBJCOPY) -O binary $^ $@
-
-%.hex:	%.elf
-	@echo "  OBJCOPY $@"
-	$(Q)$(OBJCOPY) -O ihex $^ $@
-endif
 
 .PHONY:	clean host_clean all_platforms FORCE
 
@@ -84,24 +82,24 @@ all_platforms:
 		echo "Building for hardware platform: $$PROBE_HOST" ;\
 		$(MAKE) clean ;\
 		$(MAKE);\
-		if [ -f slv3app1.bin ]; then \
-			mv slv3app1.bin artifacts/slv3app1-$$PROBE_HOST.bin ;\
+		if [ -f blackmagic.bin ]; then \
+			mv blackmagic.bin artifacts/blackmagic-$$PROBE_HOST.bin ;\
 			echo "<li><a href='blackmagic-$$PROBE_HOST.bin'>$$PROBE_HOST</a></li>"\
 				>> artifacts/index.html ;\
 		fi ;\
-		if [ -f slv3app1_dfu.bin ]; then \
-			mv slv3app1_dfu.bin artifacts/blackmagic_dfu-$$PROBE_HOST.bin ;\
+		if [ -f blackmagic_dfu.bin ]; then \
+			mv blackmagic_dfu.bin artifacts/blackmagic_dfu-$$PROBE_HOST.bin ;\
 			echo "<li><a href='blackmagic_dfu-$$PROBE_HOST.bin'>$$PROBE_HOST DFU</a></li>"\
 				>> artifacts/index.html ;\
 		fi ;\
 	done ;\
 	echo "</ul></body></html>" >> artifacts/index.html ;\
-	cp artifacts/*.bin artifacts/$(shell git describe --always --dirty --tags)
-
-
+	cp artifacts/*.bin artifacts/$(shell git describe --always --dirty --tags) \
+    mv blackmagic.bin slv3app1.bin
 command.c: include/version.h
 
 include/version.h: FORCE
 	$(Q)echo " GIT include/version.h"
 	$(Q)echo "#define FIRMWARE_VERSION \"$(shell git describe --always --dirty --tags)\"" > $@
 -include *.d
+

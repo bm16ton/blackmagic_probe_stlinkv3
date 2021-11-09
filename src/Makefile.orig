@@ -1,5 +1,4 @@
-PROBE_HOST ?= stlinkv3
-NO_BOOTLOADER ?= 1
+PROBE_HOST ?= native
 PLATFORM_DIR = platforms/$(PROBE_HOST)
 VPATH += $(PLATFORM_DIR) target
 ENABLE_DEBUG ?=
@@ -18,9 +17,48 @@ CFLAGS += -DENABLE_DEBUG
 endif
 
 SRC =			\
+	adiv5.c		\
+	adiv5_jtagdp.c	\
+	adiv5_swdp.c	\
+	command.c	\
+	cortexa.c	\
+	cortexm.c	\
+	crc32.c		\
+	efm32.c		\
+	exception.c	\
+	gdb_if.c	\
+	gdb_main.c	\
+	gdb_hostio.c	\
+	gdb_packet.c	\
+	hex_utils.c	\
+	jtag_scan.c	\
+	lmi.c		\
+	lpc_common.c	\
+	lpc11xx.c	\
+	lpc17xx.c	\
+	lpc15xx.c	\
+	lpc43xx.c	\
+	lpc546xx.c	\
+	kinetis.c	\
 	main.c		\
+	morse.c		\
+	msp432.c	\
+	nrf51.c		\
+	nxpke04.c	\
 	platform.c	\
-
+	remote.c	\
+	rp.c		\
+	sam3x.c		\
+	sam4l.c		\
+	samd.c		\
+	samx5x.c	\
+	stm32f1.c	\
+	stm32f4.c	\
+	stm32h7.c	\
+	stm32l0.c	\
+	stm32l4.c	\
+	stm32g0.c	\
+	target.c	\
 
 include $(PLATFORM_DIR)/Makefile.inc
 
@@ -30,17 +68,24 @@ LDFLAGS += $(OPT_FLAGS)
 
 ifndef TARGET
 ifdef PC_HOSTED
-TARGET = slv3app1
+TARGET = blackmagic
 else
-TARGET = slv3app1.elf
+TARGET = blackmagic.elf
 endif
 endif
 
+ifdef NO_OWN_LL
+SRC += jtagtap_generic.c swdptap_generic.c
+endif
 
+ifdef PC_HOSTED
+CFLAGS += -DPC_HOSTED=1
+else
+SRC += swdptap.c jtagtap.c
 CFLAGS += -DPC_HOSTED=0
 VPATH += platforms/common
 CFLAGS += -Iplatforms/common
-
+endif
 
 OBJ = $(patsubst %.S,%.o,$(patsubst %.c,%.o,$(SRC)))
 
@@ -84,20 +129,19 @@ all_platforms:
 		echo "Building for hardware platform: $$PROBE_HOST" ;\
 		$(MAKE) clean ;\
 		$(MAKE);\
-		if [ -f slv3app1.bin ]; then \
-			mv slv3app1.bin artifacts/slv3app1-$$PROBE_HOST.bin ;\
+		if [ -f blackmagic.bin ]; then \
+			mv blackmagic.bin artifacts/blackmagic-$$PROBE_HOST.bin ;\
 			echo "<li><a href='blackmagic-$$PROBE_HOST.bin'>$$PROBE_HOST</a></li>"\
 				>> artifacts/index.html ;\
 		fi ;\
-		if [ -f slv3app1_dfu.bin ]; then \
-			mv slv3app1_dfu.bin artifacts/blackmagic_dfu-$$PROBE_HOST.bin ;\
+		if [ -f blackmagic_dfu.bin ]; then \
+			mv blackmagic_dfu.bin artifacts/blackmagic_dfu-$$PROBE_HOST.bin ;\
 			echo "<li><a href='blackmagic_dfu-$$PROBE_HOST.bin'>$$PROBE_HOST DFU</a></li>"\
 				>> artifacts/index.html ;\
 		fi ;\
 	done ;\
 	echo "</ul></body></html>" >> artifacts/index.html ;\
 	cp artifacts/*.bin artifacts/$(shell git describe --always --dirty --tags)
-
 
 command.c: include/version.h
 

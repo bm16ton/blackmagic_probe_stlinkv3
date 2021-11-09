@@ -25,7 +25,6 @@
 #include "general.h"
 #include "cdcacm.h"
 #include "usbuart.h"
-#include "gdb_if.h"
 
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/cm3/scb.h>
@@ -40,7 +39,7 @@
 #include <libopencm3/stm32/syscfg.h>
 
 uint16_t led_idle_run;
-uint16_t srst_pin;
+
 static uint32_t hw_version;
 
 #define SCB_CCR_IC_Pos                      17U                                           /*!< SCB CCR: Instruction cache enable bit Position */
@@ -126,39 +125,10 @@ int platform_hwversion(void)
 	return hw_version;
 }
 
-void platform_srst_set_val(bool assert)
-{
-	gpio_set_val(SRST_PORT, SRST_PIN, !assert);
-	if (assert)
-		for(int i = 0; i < 10000; i++)
-			asm("nop");
-}
-
-bool platform_srst_get_val()
-{
-	return gpio_get(SRST_PORT, SRST_PIN) == 0;
-}
-
 /* GND_DETECT is pull low with 100R. Probably some task should
  * pull is high, test and than immediate release */
-
 #define GND_DETECT_PORT GPIOG
 #define GND_DETECT_PIN  GPIO5
-void exti9_5_isr(void)
-{
-	exti_reset_request(EXTI5);
-	if (gpio_get(GND_DETECT_PORT, GND_DETECT_PIN)) {
-		gpio_mode_setup(TMS_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TMS_PIN);
-		gpio_mode_setup(TCK_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TCK_PIN);
-		gpio_mode_setup(TDI_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TDI_PIN);
-		gpio_mode_setup(SRST_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, SRST_PIN);
-	} else {
-		gpio_mode_setup(TMS_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, TMS_PIN);
-		gpio_mode_setup(TCK_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, TCK_PIN);
-		gpio_mode_setup(TDI_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, TDI_PIN);
-		gpio_mode_setup(SRST_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, SRST_PIN);
-	}
-}
 
 const char *platform_target_voltage(void)
 {
@@ -214,7 +184,6 @@ void platform_init(void)
 	adc_set_sample_time(ADC1, ADC_CHANNEL0, ADC_SMPR_SMP_3CYC);
 	adc_power_on(ADC1);
 
-
 	rcc_periph_clock_enable(RCC_SYSCFG);
 	gpio_mode_setup(GND_DETECT_PORT, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GND_DETECT_PIN);
 	nvic_set_priority(NVIC_EXTI9_5_IRQ, 15);
@@ -222,29 +191,6 @@ void platform_init(void)
 	exti_select_source(EXTI5,  GPIOG);
 	exti_set_trigger(EXTI5, EXTI_TRIGGER_BOTH);
 	exti_enable_request(EXTI5);
-
-
-	/* Configure srst pin. */
-	gpio_set_output_options(SRST_PORT, GPIO_OTYPE_OD, GPIO_OSPEED_2MHZ, SRST_PIN);
-	gpio_mode_setup(SRST_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, SRST_PIN);
-	gpio_set(SRST_PORT, SRST_PIN);
-
-	gpio_mode_setup(TMS_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TMS_PIN);
-	gpio_set_output_options(TMS_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TMS_PIN);
-	gpio_mode_setup(SWDIO_IN_PORT, GPIO_MODE_INPUT, GPIO_PUPD_PULLUP, SWDIO_IN_PIN);
-
-	/* Configure TDI pin. */
-	gpio_mode_setup(TDI_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TDI_PIN);
-	gpio_set_output_options(TDI_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TDI_PIN);
-
-	/* Drive the tck/swck pin low. */
-	gpio_mode_setup(TCK_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TCK_PIN);
-	gpio_set_output_options(TCK_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TCK_PIN);
-
-	/* Drive direction switch pin. */
-	gpio_mode_setup(TMS_DRIVE_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TMS_DRIVE_PIN);
-	gpio_set_output_options(TMS_DRIVE_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TMS_DRIVE_PIN);
-	gpio_set(TMS_DRIVE_PORT, TMS_DRIVE_PIN);
 
 #define PWR_EN_PORT GPIOB
 #define PWR_EN_PIN  GPIO0
@@ -270,9 +216,8 @@ void platform_init(void)
 	gpio_mode_setup(LED_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, LED_PIN);
 	gpio_set_output_options(LED_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ,
 							LED_PIN);
-	gpio_set(LED_PORT, LED_PIN);
-//	gpio_toggle(GPIOA, GPIO10);
-//	gpio_toggle(GPIOA, GPIO10);
+	gpio_clear(GPIOA, GPIO10);
+
 	/* CAN Pins
 	 * Configure CAN pin: Slow.  OD and  PullUp for now.
 	 *
@@ -292,11 +237,11 @@ void platform_init(void)
 	extern int vector_table;
 	SCB_VTOR = (uint32_t)&vector_table;
 
-	platform_timing_init();
+//	platform_timing_init();
 	cdcacm_init();
 	usbuart_init();
 	extern void slcan_init();
 	slcan_init();
 	/* By default, do not drive the swd bus too fast. */
-	platform_max_frequency_set(6000000);
+//	platform_max_frequency_set(6000000);
 }

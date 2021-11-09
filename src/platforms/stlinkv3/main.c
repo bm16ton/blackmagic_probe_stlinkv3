@@ -17,16 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __BINDATA_H
-#define __BINDATA_H
 
-#ifndef WIN32
-#define bindatalen _bindatalen
-#define bindata _bindata
-#endif
+/* Provides main entry point.  Initialise subsystems and enter GDB
+ * protocol loop.
+ */
 
-extern const uint32_t bindatalen;
-extern const uint8_t bindata[];
+#include "general.h"
+#include "target.h"
+//#include "exception.h"
 
-#endif
+int
+main(int argc, char **argv)
+{
+	(void) argc;
+	(void) argv;
+	extern void platform_init();
+	platform_init();
+
+	while (true) {
+        asm("nop");
+	}
+
+	/* Should never get here */
+	return 0;
+}
 

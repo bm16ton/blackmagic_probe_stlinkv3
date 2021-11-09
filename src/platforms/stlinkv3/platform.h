@@ -83,35 +83,6 @@ int usbuart_debug_write(const char *buf, size_t len);
 #define SWDIO_MODER   GPIO_MODER(TMS_PORT)
 #define SWDIO_MODER_MULT (1 << (9 << 1))
 
-#define TMS_SET_MODE()\
-	gpio_mode_setup(TMS_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, TMS_PIN);	\
-	gpio_set_output_options(TMS_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TMS_PIN);
-
-#define SWDIO_MODE_FLOAT()	do {					\
-		uint32_t moder = SWDIO_MODER;				\
-		moder &= ~(0x3 * SWDIO_MODER_MULT);			\
-		SWDIO_MODER = moder;						\
-		gpio_clear(TMS_DRIVE_PORT, TMS_DRIVE_PIN);	\
-	} while(0)
-
-#define SWDIO_MODE_DRIVE()   do {					\
-		uint32_t moder = SWDIO_MODER;				\
-		moder |= (1 * SWDIO_MODER_MULT);			\
-		SWDIO_MODER = moder;						\
-		gpio_set(TMS_DRIVE_PORT, TMS_DRIVE_PIN);	\
-	} while(0)
-
-#define PIN_MODE_FAST()  do {											\
-		gpio_set_output_options(TMS_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, TMS_PIN); \
-		gpio_set_output_options(TCK_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, TCK_PIN); \
-		gpio_set_output_options(TDO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_25MHZ, TDO_PIN); \
-	} while(0)
-
-#define PIN_MODE_NORMAL() do {											\
-		gpio_set_output_options(TMS_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TMS_PIN); \
-		gpio_set_output_options(TCK_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TCK_PIN); \
-		gpio_set_output_options(TDO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_2MHZ, TDO_PIN);	\
-	} while(0)
 
 extern const struct _usbd_driver stm32f723_usb_driver;
 #define USB_DRIVER      stm32f723_usb_driver

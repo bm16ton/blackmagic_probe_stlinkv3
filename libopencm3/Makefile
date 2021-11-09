@@ -22,7 +22,7 @@ PREFIX		?= arm-none-eabi-
 STYLECHECK      := scripts/checkpatch.pl
 STYLECHECKFLAGS := --no-tree -f --terse --mailback
 
-TARGETS ?= stm32/f7
+TARGETS ?=	stm32/f7
 
 # Be silent per default, but 'make V=1' will show all compiler calls.
 ifneq ($(V),1)

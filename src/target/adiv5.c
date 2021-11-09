@@ -31,7 +31,7 @@
 #include "adiv5.h"
 #include "cortexm.h"
 #include "exception.h"
-
+#include "../libopencm3/lib/usb/usb_private.h"
 /* All this should probably be defined in a dedicated ADIV5 header, so that they
  * are consistently named and accessible when needed in the codebase.
  */
@@ -316,41 +316,7 @@ uint64_t adiv5_ap_read_pidr(ADIv5_AP_t *ap, uint32_t addr)
  */
 static uint32_t cortexm_initial_halt(ADIv5_AP_t *ap)
 {
-	platform_timeout to ;
-	uint32_t ctrlstat = adiv5_dp_read(ap->dp, ADIV5_DP_CTRLSTAT);
-	platform_timeout_set(&to, cortexm_wait_timeout);
-	uint32_t dhcsr_ctl = CORTEXM_DHCSR_DBGKEY |	CORTEXM_DHCSR_C_DEBUGEN |
-		CORTEXM_DHCSR_C_HALT;
-	uint32_t dhcsr_valid = CORTEXM_DHCSR_S_HALT | CORTEXM_DHCSR_C_DEBUGEN;
-	uint32_t dhcsr;
-	bool reset_seen = false;
-	adiv5_ap_write(ap, ADIV5_AP_CSW, ap->csw | ADIV5_AP_CSW_SIZE_WORD);
-	adiv5_dp_low_access(ap->dp, ADIV5_LOW_WRITE, ADIV5_AP_TAR, CORTEXM_DHCSR);
-	while (!platform_timeout_is_expired(&to)) {
-		if (!(ap->dp->idcode & ADIV5_MINDP))
-			adiv5_dp_write(ap->dp, ADIV5_DP_CTRLSTAT,
-						   ctrlstat | (0xfff * ADIV5_DP_CTRLSTAT_TRNCNT));
-		adiv5_dp_low_access(ap->dp, ADIV5_LOW_WRITE, ADIV5_AP_DRW, dhcsr_ctl);
-		dhcsr = adiv5_dp_low_access(ap->dp, ADIV5_LOW_READ, ADIV5_AP_DRW, 0);
-		/* ADIV5_DP_CTRLSTAT_READOK is always set e.g. on STM32F7 even so
-		   CORTEXM_DHCS reads nonsense*/
-		/* On a sleeping STM32F7, invalid DHCSR reads with e.g. 0xffffffff and
-		 * 0x0xA05F0000  may happen.
-		 * M23/33 will have S_SDE set when debug is allowed
-		 */
-		if ((dhcsr != 0xffffffff) && /* Invalid read */
-			((dhcsr & 0xf000fff0) == 0)) {/* Check RAZ bits */
-			if ((dhcsr & CORTEXM_DHCSR_S_RESET_ST)  && !reset_seen) {
-				if (connect_assert_srst)
-					return dhcsr;
-				reset_seen = true;
-				continue;
-			}
-			if ((dhcsr & dhcsr_valid) == dhcsr_valid) { /* Halted */
-				return dhcsr;
-			}
-		}
-	}
+	(void)ap;
 	return 0;
 }
 
@@ -394,18 +360,6 @@ static bool cortexm_prepare(ADIv5_AP_t *ap)
 	uint32_t demcr = CORTEXM_DEMCR_TRCENA | CORTEXM_DEMCR_VC_HARDERR |
 		CORTEXM_DEMCR_VC_CORERESET;
 	adiv5_mem_write(ap, CORTEXM_DEMCR, &demcr, sizeof(demcr));
-	platform_timeout to ;
-	platform_timeout_set(&to, cortexm_wait_timeout);
-	platform_srst_set_val(false);
-	while (1) {
-		dhcsr = adiv5_mem_read32(ap, CORTEXM_DHCSR);
-		if (!(dhcsr & CORTEXM_DHCSR_S_RESET_ST))
-			break;
-		if (platform_timeout_is_expired(&to)) {
-			DEBUG_WARN("Error releasing from srst\n");
-			return false;
-		}
-	}
 	/* Apply device specific settings for successfull Romtable scan
 	 *
 	 * STM32F7 in WFI will not read ROMTABLE when using WFI
@@ -707,8 +661,6 @@ void adiv5_dp_init(ADIv5_DP_t *dp)
 		ctrlstat = adiv5_dp_read(dp, ADIV5_DP_CTRLSTAT);
 	}
 
-	platform_timeout timeout;
-	platform_timeout_set(&timeout, 201);
 	/* Write request for system and debug power up */
 	adiv5_dp_write(dp, ADIV5_DP_CTRLSTAT,
 			ctrlstat |= ADIV5_DP_CTRLSTAT_CSYSPWRUPREQ |
@@ -721,11 +673,6 @@ void adiv5_dp_init(ADIv5_DP_t *dp)
 		if (check == (ADIV5_DP_CTRLSTAT_CSYSPWRUPACK |
 					  ADIV5_DP_CTRLSTAT_CDBGPWRUPACK))
 			break;
-		if (platform_timeout_is_expired(&timeout)) {
-			DEBUG_INFO("DEBUG Power-Up failed\n");
-			free(dp); /* No AP that referenced this DP so long*/
-			return;
-		}
 	}
 	/* This AP reset logic is described in ADIv5, but fails to work
 	 * correctly on STM32.	CDBGRSTACK is never asserted, and we
@@ -741,14 +688,9 @@ void adiv5_dp_init(ADIv5_DP_t *dp)
 				   ctrlstat &= ~ADIV5_DP_CTRLSTAT_CDBGRSTREQ);
 	/* Wait for acknowledge */
 	while(1) {
-		platform_delay(20);
 		ctrlstat = adiv5_dp_read(dp, ADIV5_DP_CTRLSTAT);
 		if (ctrlstat & ADIV5_DP_CTRLSTAT_CDBGRSTACK) {
 			DEBUG_INFO("RESET_SEQ succeeded.\n");
-			break;
-		}
-		if (platform_timeout_is_expired(&timeout)) {
-			DEBUG_INFO("RESET_SEQ failed\n");
 			break;
 		}
 	}

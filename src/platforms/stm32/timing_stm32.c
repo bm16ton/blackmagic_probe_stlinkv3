@@ -41,12 +41,6 @@ void platform_timing_init(void)
 	systick_counter_enable();
 }
 
-void platform_delay(uint32_t ms)
-{
-	platform_timeout timeout;
-	platform_timeout_set(&timeout, ms);
-	while (!platform_timeout_is_expired(&timeout));
-}
 
 void sys_tick_handler(void)
 {
